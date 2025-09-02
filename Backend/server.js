@@ -40,7 +40,7 @@ const upload = multer({
 });
 
 // Initialize Google Generative AI 
-const GEMINI_API_KEY = "AIzaSyDG4GWV3rMHa1UFoK_WDVjJoAYcmOq_1vc"; // Replace with your actual API key
+const GEMINI_API_KEY = "GEMINI API KEY"; // Replace with your actual API key
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
 // System instructions for Revolt Motors specialization
