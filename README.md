@@ -48,9 +48,6 @@ A voice-enabled AI assistant specialized in Revolt Motors electric vehicles, pow
    - Open the `index.html` file in a web browser
    - Or serve it using a local server:
      ```bash
-     # Using Python
-     python -m http.server 8000
-     
      # Using Node.js http-server
      npx http-server
      ```
