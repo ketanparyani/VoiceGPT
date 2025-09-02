@@ -38,7 +38,7 @@ A voice-enabled AI assistant specialized in Revolt Motors electric vehicles, pow
    ```
 
 3. **Add your Gemini API key**:
-   - Add your API key: GEMINI_API_KEY =Replace the Actual Gemini API Key at server.js
+   - Add your API key: const GEMINI_API_KEY = "Replace the Actual Gemini API Key at server.js"
 4. **Start the backend server**:
    ```bash
    npm run dev
