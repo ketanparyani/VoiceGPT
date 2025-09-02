@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Revolt Motors Voice Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 500px;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .logo {
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 10px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #4b6cb7;
+        }
+        
+        .status-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            background-color: #ff4d4d;
+        }
+        
+        .status-dot.listening {
+            background-color: #00cc66;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-dot.responding {
+            background-color: #ffcc00;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .status-dot.speaking {
+            background-color: #9b59b6;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            border-radius: 18px;
+            line-height: 1.4;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .user-message {
+            align-self: flex-end;
+            background-color: #4b6cb7;
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .ai-message {
+            align-self: flex-start;
+            background-color: #f0f0f5;
+            color: #333;
+            border-bottom-left-radius: 5px;
+        }
+        
+        .controls {
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            background-color: #f9f9f9;
+            border-top: 1px solid #eee;
+        }
+        
+        .mic-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #4b6cb7, #182848);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .mic-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        .mic-btn.listening {
+            background: linear-gradient(90deg, #ff416c, #ff4b2b);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .instructions {
+            padding: 15px 20px;
+            background-color: #ffe066;
+            color: #333;
+            font-size: 0.9rem;
+            text-align: center;
+            border-bottom: 1px solid #ffd633;
+        }
+        
+        .latency {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                height: 95vh;
+                width: 95%;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">RM</div>
+            <h1>Revolt Motors Voice Assistant</h1>
+            <p>Powered by Gemini AI</p>
+            <div class="status-indicator">
+                <div class="status-dot" id="status-dot"></div>
+                <span id="status-text">Ready</span>
+            </div>
+        </div>
+        
+        <div class="instructions">
+            <i class="fas fa-info-circle"></i> Specialized in Revolt Motors. Tap the mic to start talking.
+        </div>
+        
+        <div class="chat-container" id="chat-container">
+            <div class="message ai-message">
+                Hello! I'm your Revolt Motors assistant. I can help you with information about our electric bikes, models, pricing, and features. How can I assist you today?
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="mic-btn" id="mic-btn">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+        
+        <div class="latency" id="latency">
+            Response latency: Not measured yet
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+     
+    // DOM elements
+    const micBtn = document.getElementById('mic-btn');
+    const chatContainer = document.getElementById('chat-container');
+    const statusDot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    const latencyDiv = document.getElementById('latency');
+    
+    // State variables
+    let isListening = false;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let responseStartTime = 0;
+    let mediaStream = null;
+    let sessionId = Date.now().toString();
+    let isSpeaking = false;
+    let speechRecognition = null;
+    let userQuery = "";
+    
+    // Initialize speech recognition
+    function initSpeechRecognition() {
+        if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            speechRecognition = new SpeechRecognition();
+            speechRecognition.continuous = false;
+            speechRecognition.interimResults = true;
+            speechRecognition.lang = 'en-US';
+            
+            speechRecognition.onresult = function(event) {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                
+                userQuery = transcript;
+                
+                // Update the last user message with the actual transcript
+                const userMessages = document.querySelectorAll('.user-message');
+                if (userMessages.length > 0) {
+                    userMessages[userMessages.length - 1].textContent = transcript || "Listening...";
+                }
+            };
+            
+            speechRecognition.onerror = function(event) {
+                console.error('Speech recognition error', event.error);
+            };
+            
+            speechRecognition.onend = function() {
+                // This gets called when speech recognition automatically stops
+                if (isListening) {
+                    stopRecording();
+                }
+            };
+        } else {
+            console.warn('Speech Recognition API not supported in this browser');
+            // Fallback: Show a message to the user
+            addMessage("Speech recognition not supported in this browser. Using simulated input.", false);
+        }
+    }
+    
+    // Update status indicator
+    function updateStatus(status, className) {
+        statusDot.className = 'status-dot ' + className;
+        statusText.textContent = status;
+    }
+    
+    // Add message to chat
+    function addMessage(text, isUser) {
+        const messageDiv = document.createElement('div');
+        messageDiv.classList.add('message');
+        messageDiv.classList.add(isUser ? 'user-message' : 'ai-message');
+        messageDiv.textContent = text;
+        chatContainer.appendChild(messageDiv);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    
+    // Text-to-speech function
+    function speakText(text) {
+        if ('speechSynthesis' in window) {
+            // Stop any ongoing speech first
+            window.speechSynthesis.cancel();
+            
+            const speech = new SpeechSynthesisUtterance(text);
+            speech.volume = 1;
+            speech.rate = 1;
+            speech.pitch = 1;
+            speech.lang = 'en-US';
+            
+            isSpeaking = true;
+            updateStatus('Speaking', 'speaking');
+            
+            speech.onend = function() {
+                isSpeaking = false;
+                updateStatus('Ready', '');
+            };
+            
+            speech.onerror = function() {
+                isSpeaking = false;
+                updateStatus('Ready', '');
+                console.error('Speech synthesis error');
+            };
+            
+            window.speechSynthesis.speak(speech);
+        }
+    }
+    
+    // Initialize audio recording
+    async function initAudio() {
+        try {
+            mediaStream = await navigator.mediaDevices.getUserMedia({ 
+                audio: {
+                    channelCount: 1,
+                    sampleRate: 16000,
+                    sampleSize: 16
+                } 
+            });
+            
+            const options = { mimeType: 'audio/webm; codecs=opus' };
+            mediaRecorder = new MediaRecorder(mediaStream, options);
+            
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunks.push(event.data);
+                }
+            };
+            
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                
+                // If speech recognition didn't capture anything, use a fallback
+                if (!userQuery || userQuery.trim() === "") {
+                    userQuery = "Tell me about Revolt Motors";
+                }
+                
+                // Update the user message with what was actually said
+                const userMessages = document.querySelectorAll('.user-message');
+                if (userMessages.length > 0) {
+                    userMessages[userMessages.length - 1].textContent = userQuery;
+                }
+                
+                // Call the Gemini API
+                responseStartTime = Date.now();
+                callGeminiAPI(audioBlob, userQuery).then(response => {
+                    // Calculate and display latency
+                    const latency = Date.now() - responseStartTime;
+                    latencyDiv.textContent = `Response latency: ${latency}ms`;
+                    
+                    // Add AI response to UI
+                    addMessage(response.text, false);
+                    
+                    // Speak the response
+                    speakText(response.text);
+                }).catch(error => {
+                    console.error("API Error:", error);
+                    addMessage("Sorry, I encountered an error. Please try again.", false);
+                    updateStatus('Error', '');
+                    latencyDiv.textContent = 'Response latency: Error';
+                });
+            };
+            
+        } catch (error) {
+            console.error("Error accessing microphone:", error);
+            addMessage("Microphone access denied. Please allow microphone permissions to use voice features.", false);
+        }
+    }
+    
+    // Call Gemini API through backend
+    async function callGeminiAPI(audioBlob, userText) {
+        updateStatus('Processing', 'responding');
+        
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'audio.webm');
+        formData.append('userText', userText); // Send the actual user query
+        formData.append('startTime', responseStartTime.toString());
+        formData.append('sessionId', sessionId);
+        
+        try {
+            const response = await fetch('http://localhost:3001/api/conversation', {
+                method: 'POST',
+                body: formData
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error("API call failed:", error);
+            // Fallback to mock response if server is not available
+            const responses = [
+                "I'm having trouble connecting to the server. Please make sure the backend is running.",
+                "Revolt Motors offers the RV400 and RV300 models. The RV400 is our flagship model with a top speed of 85 km/h.",
+                "The Revolt RV400 starts at ₹1.03 lakh. We also offer subscription plans starting at ₹2,999 per month.",
+                "Our bikes use removable lithium-ion batteries that can be charged at home in 4-5 hours."
+            ];
+            
+            return {
+                text: responses[Math.floor(Math.random() * responses.length)],
+                latency: 1200
+            };
+        }
+    }
+    
+    // Handle recording start
+    function startRecording() {
+        if (isListening) return;
+        
+        // Stop any ongoing speech
+        if (isSpeaking) {
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+        }
+        
+        // Reset user query
+        userQuery = "";
+        
+        // Start speech recognition if available
+        if (speechRecognition) {
+            try {
+                speechRecognition.start();
+            } catch (error) {
+                console.error("Speech recognition error:", error);
+            }
+        }
+        
+        audioChunks = [];
+        mediaRecorder.start();
+        updateStatus('Listening', 'listening');
+        micBtn.classList.add('listening');
+        isListening = true;
+        
+        // Add a temporary user message
+        addMessage("Listening...", true);
+    }
+    
+    // Handle recording stop
+    function stopRecording() {
+        if (!isListening) return;
+        
+        // Stop speech recognition if available
+        if (speechRecognition) {
+            try {
+                speechRecognition.stop();
+            } catch (error) {
+                console.error("Speech recognition stop error:", error);
+            }
+        }
+        
+        mediaRecorder.stop();
+        isListening = false;
+        micBtn.classList.remove('listening');
+        updateStatus('Processing', 'responding');
+    }
+    
+    // Handle interruption
+    function handleInterruption() {
+        if (isSpeaking) {
+            // Stop speaking
+            window.speechSynthesis.cancel();
+            isSpeaking = false;
+            
+            addMessage("(Interrupted) Please go ahead, I'm listening...", false);
+            updateStatus('Ready', '');
+            latencyDiv.textContent = 'Response interrupted by user';
+            
+            // Start listening again
+            startRecording();
+        } else if (statusDot.classList.contains('responding')) {
+            // If still processing response
+            addMessage("(Please wait while I process your request)", false);
+        }
+    }
+    
+    // Event listeners
+    micBtn.addEventListener('click', () => {
+        if (isListening) {
+            stopRecording();
+        } else {
+            startRecording();
+        }
+    });
+    
+    // Handle interruption by clicking during response
+    chatContainer.addEventListener('click', () => {
+        handleInterruption();
+    });
+    
+    // Handle interruption by pressing spacebar
+    document.addEventListener('keydown', (event) => {
+        if (event.code === 'Space' && (isSpeaking || statusDot.classList.contains('responding'))) {
+            handleInterruption();
+            event.preventDefault(); // Prevent space from scrolling the page
+        }
+    });
+    
+    // Initialize the application
+    updateStatus('Ready', '');
+    initSpeechRecognition();
+    initAudio();
+    </script>
+</body>
+</html>
